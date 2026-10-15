@@ -15,7 +15,7 @@ authentication and encryption.
 
 This script actively tests whether a device responds to SNMPv1 and
 SNMPv2c requests using a common default community string ("public"),
-and separately checks whether it exposes an SNMPv3 engine. It reports
+and separately checks whether it answers an SNMPv3 request. It reports
 a clear warning if the insecure legacy versions are still enabled,
 since this is a well-known and still common real-world misconfiguration.
 ]]
@@ -38,10 +38,11 @@ portrule = shortport.port_or_service(161, "snmp", "udp", {"open", "open|filtered
 
 -- Tries a GET of sysDescr.0 using the given SNMP version (0 = v1, 1 = v2c)
 -- and the given community string. Returns true if the device responds.
+-- The version and community are passed to Helper:new, which is how
+-- Nmap's snmp library expects them to be set.
 local function try_version(host, port, version, community)
-  local snmpHelper = snmp.Helper:new(host, port)
-  snmpHelper.version = version
-  snmpHelper.community = community
+  local snmpHelper = snmp.Helper:new(host, port, community,
+    {version = version, timeout = 2000})
   snmpHelper:connect()
 
   local status, response = snmpHelper:get({reqId=1234}, "1.3.6.1.2.1.1.1.0")
